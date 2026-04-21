@@ -22,20 +22,20 @@
 
             <div class="btns_interact col-12 col-sm-6">
                 <!-- 收藏按钮 -->
-                <b-button v-if="this.$store.state.user.user_id" @click="add_collect()" variant="outline-info">
+                <b-button v-if="this.$store.state.user.user_id" @click="add_collect()" :variant="check_collected ? 'info' : 'outline-info'" class="interact-btn" :class="{ 'is-active': check_collected }">
                     <b-icon v-if="check_collected" icon="heart-fill"/>
                     <b-icon v-else icon="heart"/>
                     <span>收藏</span>
                 </b-button>
-                <b-button v-else @click="$router.push('/account/login')" variant="outline-info">
+                <b-button v-else @click="$router.push('/account/login')" variant="outline-info" class="interact-btn">
                     <b-icon v-if="check_collected" icon="heart-fill"/>
                     <b-icon v-else icon="heart"/>
                     <span>收藏</span>
                 </b-button>
 
                 <!-- 点赞按钮 -->
-                <b-button v-if="this.$store.state.user.user_id" class="ml" variant="outline-info" @click="add_praise()">
-                    <b-icon icon="hand-thumbs-up"/>
+                <b-button v-if="this.$store.state.user.user_id" class="ml interact-btn" :variant="check_praised ? 'info' : 'outline-info'" :class="{ 'is-active': check_praised }" @click="add_praise()">
+                    <b-icon :icon="check_praised ? 'hand-thumbs-up-fill' : 'hand-thumbs-up'"/>
                     <span>点赞</span>
                 </b-button>
             </div>
@@ -305,6 +305,16 @@
         display: flex;
         justify-content: center;
         align-items: center;
+    }
+
+    .btns_interact .interact-btn.is-active{
+        background-color: var(--color_primary) !important;
+        border-color: var(--color_primary) !important;
+        color: #fff !important;
+    }
+
+    .btns_interact .interact-btn.is-active svg{
+        color: #fff !important;
     }
 
     @media (max-width: 576px) {

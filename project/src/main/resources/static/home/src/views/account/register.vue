@@ -275,7 +275,8 @@
 			 */
 			get_submit(form ,table) {
 				var form_sub = this.form_sub;
-				this.$get("~/api/user/get_obj?", form, (res) => {
+				// 只用 username 获取 user_id，避免因为空字段/默认值不一致导致查不到，从而登录时报“用户不存在”
+				this.$get("~/api/user/get_obj?", { username: form.username }, (res) => {
 					console.log("注册表信息res",res);
 					if (res.result && res.result.obj) {
 						form_sub.user_id = res.result.obj.user_id;
