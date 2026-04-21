@@ -72,10 +72,7 @@
 						this.$router.push("/login");
 					});
 				} else if(command.indexOf("http")!==-1){
-					let token = $.db.get("token");
-					if (token){
-						location.href = command+"?token="+encodeURIComponent(token);
-					}
+					location.href = command;
 				} else {
 					this.$router.push(command);
 				}
@@ -100,7 +97,14 @@
 			this.updateDateTime();
     		// 在组件挂载后，每秒更新一次时间
    		 	this.timer = setInterval(this.updateDateTime, 1000);
-   		 	this.homeUrl =  window.location.origin+window.location.pathname.replace("/admin/dist","/home/dist")
+   		 	const { protocol, hostname, port, origin, pathname } = window.location;
+			if (String(port) === "8083") {
+				this.homeUrl = `${protocol}//${hostname}:8081/#/`;
+			} else if (pathname.indexOf("/admin/dist") !== -1) {
+				this.homeUrl = `${origin}${pathname.replace("/admin/dist","/home/dist")}#/`;
+			} else {
+				this.homeUrl = `${origin}/home/dist/#/`;
+			}
   		},
 
 	}

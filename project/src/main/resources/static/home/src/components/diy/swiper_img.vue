@@ -15,7 +15,7 @@
       :key="i"
     >
       <template #img>
-        <a v-if="o[vm.url]" target="_blank" :href="o[vm.url]">
+        <a v-if="o[vm.url]" target="_blank" :href="resolveSlideUrl(o[vm.url])">
           <div class="swiper-imgs" :style="{backgroundImage: 'url(' + $fullUrl(o[vm.img]) + ')'}"></div>
         </a>
         <div v-else class="swiper-imgs" :style="{backgroundImage: 'url(' + $fullUrl(o[vm.img]) + ')'}"></div>
@@ -64,6 +64,21 @@ export default {
     },
     onSlideEnd(slide) {
       this.sliding = false;
+    },
+    resolveSlideUrl(url) {
+      if (!url) return "";
+      if (/^https?:\/\//i.test(url)) return url;
+      let target = String(url).trim();
+      if (target.indexOf("/article/details?article=") === 0) {
+        target = target.replace("/article/details?article=", "/article/details?article_id=");
+      }
+      if (target.indexOf("/article/details?article_id=") === 0) {
+        return "/#"+target;
+      }
+      if (target.indexOf("/") === 0 && target.indexOf("/#/") !== 0) {
+        return "/#"+target;
+      }
+      return target;
     },
     // fullImg(img){
     //   return "/api/img/slide/"+img;
