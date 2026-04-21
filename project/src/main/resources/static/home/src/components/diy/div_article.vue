@@ -307,9 +307,22 @@
         align-items: center;
     }
 
+    .btns_interact .interact-btn{
+        font-weight: 600;
+        border-width: 2px;
+    }
+
+    .btns_interact .interact-btn span{
+        font-weight: 600;
+    }
+
+    .btns_interact .interact-btn svg{
+        font-size: 1.05em;
+    }
+
     .btns_interact .interact-btn.is-active{
-        background-color: var(--color_primary) !important;
-        border-color: var(--color_primary) !important;
+        background-color: #134b59 !important;
+        border-color: #134b59 !important;
         color: #fff !important;
     }
 
