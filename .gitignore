@@ -3,3 +3,7 @@ project/target/
 **/.DS_Store
 tmp_pwd.txt
 tmp_pub.pem
+
+# 误下载/临时商品图（文件名过长，勿入库）
+project/src/main/resources/static/O1CN*
+project/src/main/resources/static/TB*

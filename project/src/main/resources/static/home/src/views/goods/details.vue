@@ -92,6 +92,9 @@
                     <span v-else-if="o.type==='uid'">
                                             {{get_user_obj(o.field_value)}}
                                         </span>
+                    <span v-else-if="o.type==='spec_schema'">
+                                            {{ formatSpecSchema(o.field_value) }}
+                                        </span>
                     <span v-else>{{o.field_value}}</span>
                   </div>
                   <div class="goods_detail_editor" v-html="obj.content"></div>
@@ -196,11 +199,9 @@ export default {
      * 获得热门商品
      */
     get_hot_goods() {
-		let url = "~/api/goods/get_list?";
+		let url = "~/api/goods/get_hot_list?";
 		let param = {
-			page: 1,
-			size: 5,
-			orderby: "hits"
+			size: 5
 		};
 							      this.$get(
         url,
@@ -325,6 +326,38 @@ export default {
       }
       console.log(result)
       return result;
+    },
+    formatSpecSchema(raw) {
+      if (!raw) {
+        return "";
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+          return raw;
+        }
+        return parsed
+          .map(group => {
+            const name = (group && group.name) || "";
+            const options = Array.isArray(group && group.options) ? group.options : [];
+            const text = options
+              .map(option => {
+                if (typeof option === "string") {
+                  return option;
+                }
+                const value = (option && option.value) || "";
+                const price = option && option.price !== undefined ? `￥${option.price}` : "";
+                return `${value}${price ? "(" + price + ")" : ""}`;
+              })
+              .filter(Boolean)
+              .join(" / ");
+            return `${name}: ${text}`;
+          })
+          .filter(Boolean)
+          .join("；");
+      } catch (e) {
+        return raw;
+      }
     }
   },
   computed: {
@@ -332,8 +365,11 @@ export default {
      * 获得图片列表
      */
     list_img() {
-      var { img_1, img_2, img_3, img_4 } = this.obj;
+      var { img, img_1, img_2, img_3, img_4, img_5 } = this.obj;
       var list_img = [];
+      if (img) {
+        list_img.push(img);
+      }
       if (img_1) {
         list_img.push(img_1);
       }
@@ -345,6 +381,9 @@ export default {
       }
       if (img_4) {
         list_img.push(img_4);
+      }
+      if (img_5) {
+        list_img.push(img_5);
       }
       return list_img;
     },

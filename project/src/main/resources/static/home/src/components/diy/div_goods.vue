@@ -38,13 +38,22 @@
                    <div class="price_b">
                        <div class="price_block">
                            <div class="price_item">
-                               <span class="price">￥{{ obj.price }}</span>
+                               <span class="price">￥{{ displayPrice }}</span>
                                <span class="price_ago">￥{{ obj.price_ago }}</span>
                            </div>
                            <score_star :score="score"/>
                        </div>
                         <div class="sales">已卖{{ sales_num }}</div>
                         <div class="sales">库存{{ obj.inventory }}</div>
+                       <div v-if="specGroups.length" class="spec-select-wrap">
+                           <div v-for="group in specGroups" :key="group.name" class="spec-select-row">
+                               <label>{{ group.name }}：</label>
+                               <select v-model="selectedSpecs[group.name]" class="spec-select">
+                                   <option v-for="opt in group.options" :key="group.name + '_' + opt.value" :value="opt.value">{{ opt.value }}</option>
+                               </select>
+                           </div>
+                           <div class="spec-stock-tip">当前可购买库存：{{ selectedSpecStock }}，当前所选价：￥{{ selectedSpecPrice }}</div>
+                       </div>
                        <div class="bottom_handle">
                            <div class="num_buy_block">
                                <div class="subtract" @click="sub_num(obj)">
@@ -57,11 +66,11 @@
                                    <span>+</span>
                                </div>
                            </div>
-                                                                              <div class="buy" v-if="user.user_id && (!obj.source_table||$check_cart_page('/'+obj.source_table+'/details'))" @click="add_order()">
+                                                                              <div class="buy" v-if="user.user_id && (!obj.source_table||$check_cart_page('/'+obj.source_table+'/details'))" @click="openSpecDialog('order')">
                             <span>立即购买</span>
                           </div>
                                                    <!-- 购物车 -->
-                           <div class="cart" v-if="user.user_id && (!obj.source_table||$check_cart_page('/'+obj.source_table+'/details'))" @click="add_cart()">
+                           <div class="cart" v-if="user.user_id && (!obj.source_table||$check_cart_page('/'+obj.source_table+'/details'))" @click="openSpecDialog('cart')">
                                <b-icon icon="cart"/>
                            </div>
 
@@ -87,6 +96,24 @@
                 </div>
             </div>
         </div>
+        <el-dialog
+            title="请选择规格"
+            :visible.sync="specDialogVisible"
+            width="420px"
+            append-to-body
+        >
+            <div v-for="group in specGroups" :key="'dialog_' + group.name" class="spec-select-row dialog-row">
+                <label>{{ group.name }}：</label>
+                <select v-model="selectedSpecs[group.name]" class="spec-select">
+                    <option v-for="opt in group.options" :key="group.name + '_dialog_' + opt.value" :value="opt.value">{{ opt.value }}</option>
+                </select>
+            </div>
+            <div class="spec-stock-tip">当前可购买库存：{{ selectedSpecStock }}，当前所选价：￥{{ selectedSpecPrice }}</div>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="specDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="confirmSpecAction">确认</el-button>
+            </span>
+        </el-dialog>
     </div>
 </template>
 
@@ -156,9 +183,129 @@
                 check_collected: false,
                 address_promise: {},
                 sales_num:0,
+                selectedSpecs: {},
+                specDialogVisible: false,
+                pendingSpecAction: ""
             };
         },
+        computed: {
+            specGroups() {
+                const entry = this.customizeFields.find(item => item.field_name === "商品规格");
+                if (!entry || !entry.field_value) {
+                    return [];
+                }
+                try {
+                    const parsed = JSON.parse(entry.field_value);
+                    if (!Array.isArray(parsed)) {
+                        return [];
+                    }
+                    return parsed
+                        .map(group => ({
+                            name: String((group && group.name) || "").trim(),
+                            options: Array.isArray(group && group.options)
+                                ? group.options.map(v => this.normalizeSpecOption(v)).filter(v => v.value)
+                                : []
+                        }))
+                        .filter(group => group.name && group.options.length);
+                } catch (e) {
+                    return [];
+                }
+            },
+            customizeFields() {
+                if (!this.obj || !this.obj.customize_field) {
+                    return [];
+                }
+                try {
+                    const parsed = JSON.parse(this.obj.customize_field);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (e) {
+                    return [];
+                }
+            },
+            selectedSpecStock() {
+                if (!this.specGroups.length) {
+                    return Number(this.obj.inventory || 0);
+                }
+                const stocks = this.specGroups.map(group => {
+                    const selectedValue = this.selectedSpecs[group.name];
+                    const selected = group.options.find(o => o.value === selectedValue);
+                    return selected ? Number(selected.stock || 0) : 0;
+                });
+                return stocks.length ? Math.min.apply(null, stocks) : Number(this.obj.inventory || 0);
+            },
+            selectedSpecPrice() {
+                if (!this.specGroups.length) {
+                    return Number(this.obj.price || 0);
+                }
+                const firstGroup = this.specGroups[0];
+                if (!firstGroup || !firstGroup.options || !firstGroup.options.length) {
+                    return Number(this.obj.price || 0);
+                }
+                const selectedValue = this.selectedSpecs[firstGroup.name];
+                const selected = firstGroup.options.find(o => o.value === selectedValue);
+                return selected && Number.isFinite(Number(selected.price)) && Number(selected.price) > 0
+                    ? Number(selected.price)
+                    : Number(this.obj.price || 0);
+            },
+            displayPrice() {
+                if (!this.specGroups.length) {
+                    return Number(this.obj.price || 0);
+                }
+                const firstGroup = this.specGroups[0];
+                const prices = (firstGroup && firstGroup.options ? firstGroup.options : [])
+                    .map(o => Number(o.price))
+                    .filter(p => Number.isFinite(p) && p > 0);
+                if (!prices.length) {
+                    return Number(this.obj.price || 0);
+                }
+                return Math.min.apply(null, prices);
+            }
+        },
         methods: {
+            normalizeSpecOption(raw) {
+                if (typeof raw === "string") {
+                    return { value: raw.trim(), stock: Number(this.obj.inventory || 0), price: Number(this.obj.price || 0) };
+                }
+                const value = String((raw && raw.value) || "").trim();
+                const stock = Number.isFinite(Number(raw && raw.stock)) ? Math.max(0, parseInt(raw.stock, 10)) : Number(this.obj.inventory || 0);
+                const price = Number.isFinite(Number(raw && raw.price)) ? Math.max(0, Number(raw.price)) : Number(this.obj.price || 0);
+                return { value, stock, price };
+            },
+            initSpecSelections() {
+                const next = {};
+                this.specGroups.forEach(group => {
+                    next[group.name] = (group.options[0] && group.options[0].value) || "";
+                });
+                this.selectedSpecs = next;
+            },
+            openSpecDialog(action) {
+                this.pendingSpecAction = action;
+                if (this.specGroups.length) {
+                    this.specDialogVisible = true;
+                    return;
+                }
+                if (action === "order") {
+                    this.submitOrder();
+                } else {
+                    this.submitCart();
+                }
+            },
+            confirmSpecAction() {
+                this.specDialogVisible = false;
+                if (this.pendingSpecAction === "order") {
+                    this.submitOrder();
+                } else {
+                    this.submitCart();
+                }
+            },
+            selectedSpecText() {
+                if (!this.specGroups.length) {
+                    return "";
+                }
+                return this.specGroups
+                    .map(group => `${group.name}:${this.selectedSpecs[group.name] || ""}`)
+                    .join("；");
+            },
             /**
              * 选择图片展示
              */
@@ -198,9 +345,9 @@
             /**
              * 添加跳转到订单详情
              */
-            async add_order() {
+            async submitOrder() {
                 //库存不足直接返回
-                if (this.obj.num_buy>this.obj.inventory){
+                if (this.obj.num_buy > this.selectedSpecStock){
                     this.$toast("库存不足");
                     return;
                 }
@@ -226,7 +373,8 @@
                         (res) => {
                             if (res.result) {
                                 //生成订单号
-                                let price_count = price * num;
+                                const selectedPrice = this.selectedSpecPrice;
+                                let price_count = selectedPrice * num;
                                 console.log(res.result)
                                 var order_number = this.order_code();
                                 var body = {
@@ -236,7 +384,7 @@
                                     num,
                                     title,
                                     img,
-                                    price,
+                                    price: selectedPrice,
                                     price_ago:price_ago,
                                     price_count:price_count,
                                     "contact_name":res.result.obj.name,
@@ -245,6 +393,8 @@
                                     "postal_code":res.result.obj.postcode,
                                     user_id,
                                     description,
+                                    norms: this.selectedSpecText(),
+                                    spec_stock: this.selectedSpecStock,
 									merchant_id: this.obj.user_id
                                 };
                                 this.$post("~/api/order/add?", body, (res) => {
@@ -266,7 +416,11 @@
             /**
              * 添加购物车
              */
-            add_cart() {
+            submitCart() {
+                if (this.obj.num_buy > this.selectedSpecStock){
+                    this.$toast("库存不足");
+                    return;
+                }
                 var {
                     title,
                     img,
@@ -280,43 +434,21 @@
                 var body = {
                     title,
                     img,
-                    price,
+                    price: this.selectedSpecPrice,
                     price_ago,
                     num,
-                    price_count: price * num,
+                    price_count: this.selectedSpecPrice * num,
                     description,
+                    description: this.selectedSpecText() || description,
+                    norms: this.selectedSpecText(),
+                    spec_stock: this.selectedSpecStock,
                     goods_id,
                     type,
                     user_id: this.$store.state.user.user_id
                 };
-
-                this.$get("~/api/cart/get_list?like=0", {
-                    goods_id: this.obj.goods_id,
-                    user_id: this.$store.state.user.user_id
-                }, (res) => {
-                    console.log(res)
-                    if (res.result.count) {
-                        var {cart_id, num, price, price_count} = res.result.list[0];
-                        num += 1;
-                        price_count += price;
-                        this.$post(
-                            `~/api/cart/set?cart_id=${cart_id}`,
-                            {
-                                num,
-                                price,
-                                price_count,
-                            },
-                            (res) => {
-                                this.$toast("已加入购物车", "成功");
-                                console.log("更改值")
-                            }
-                        );
-                    } else {
-                        this.$post("~/api/cart/add?", body, (res) => {
-                            this.$toast("已加入购物车", "成功");
-                        });
-                    }
-                })
+                this.$post("~/api/cart/add?", body, (res) => {
+                    this.$toast("已加入购物车", "成功");
+                });
             },
             /**
              * 添加收藏
@@ -392,11 +524,20 @@
             })
 
             this.check_collect();
+            this.initSpecSelections();
             // addEventListener('resize', () => {
             //     this.getScreen();
             // })
             this.get_sales_num();
           }, 1000);
+        },
+        watch: {
+            specGroups: {
+                deep: true,
+                handler() {
+                    this.initSpecSelections();
+                }
+            }
         }
     };
 </script>
@@ -424,6 +565,32 @@
     .sales {
         margin: 0.5rem 0;
         text-align: right;
+    }
+    .spec-select-wrap {
+        margin: 8px 0 12px;
+    }
+    .spec-select-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+    .spec-select {
+        min-width: 120px;
+        height: 30px;
+        border: 1px solid #dcdfe6;
+        border-radius: 4px;
+        padding: 0 6px;
+        outline: none;
+    }
+    .spec-stock-tip {
+        text-align: right;
+        color: #666;
+        font-size: 13px;
+    }
+    .dialog-row {
+        justify-content: space-between;
     }
 
     .goods_name {

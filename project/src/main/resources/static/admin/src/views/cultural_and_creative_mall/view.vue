@@ -130,12 +130,41 @@
 					<div v-else-if="$check_field('get','personnel_name')">{{form['personnel_name']}}</div>
 											</el-form-item>
 			</el-col>
-								<el-col v-if="$check_field('get','product_specifications') || $check_field('add','product_specifications') || $check_field('set','product_specifications')" :xs="24" :sm="12" :lg="8" class="el_form_item_warp">
-							<el-form-item label="商品规格" prop="product_specifications">
-															<el-input id="product_specifications" v-model="form['product_specifications']" placeholder="请输入商品规格"
-							  v-if="(form['cultural_and_creative_mall_id'] && $check_field('set','product_specifications')) || (!form['cultural_and_creative_mall_id'] && $check_field('add','product_specifications'))" :disabled="disabledObj['product_specifications_isDisabled']"></el-input>
-					<div v-else-if="$check_field('get','product_specifications')">{{form['product_specifications']}}</div>
-											</el-form-item>
+			<el-col v-if="$check_field('get','product_specifications') || $check_field('add','product_specifications') || $check_field('set','product_specifications')" :xs="24" :sm="24" :lg="24" class="el_form_item_warp">
+				<el-form-item label="商品规格" prop="product_specifications">
+					<div v-if="(form['cultural_and_creative_mall_id'] && $check_field('set','product_specifications')) || (!form['cultural_and_creative_mall_id'] && $check_field('add','product_specifications'))">
+						<div class="spec-editor-header">
+							<el-button type="primary" size="mini" @click="addSpecGroup">新增分类</el-button>
+						</div>
+						<div v-for="(group, gIdx) in specification_groups" :key="'group-'+gIdx" class="spec-group-card">
+							<div class="spec-group-row">
+								<el-input v-model="group.name" placeholder="分类名称（如 颜色、尺码）" class="spec-group-name"></el-input>
+								<el-button size="mini" @click="moveSpecGroup(gIdx, -1)" :disabled="gIdx===0">上移</el-button>
+								<el-button size="mini" @click="moveSpecGroup(gIdx, 1)" :disabled="gIdx===specification_groups.length-1">下移</el-button>
+								<el-button size="mini" type="danger" @click="removeSpecGroup(gIdx)">删除分类</el-button>
+							</div>
+							<div v-for="(opt, oIdx) in group.options" :key="'opt-'+gIdx+'-'+oIdx" class="spec-option-row">
+								<el-input v-model="group.options[oIdx].value" placeholder="属性值（如 红色、XL）" class="spec-option-input"></el-input>
+								<div class="spec-price-editor">
+									<el-button size="mini" @click="changeSpecPrice(gIdx, oIdx, -1)" :disabled="gIdx !== 0">-</el-button>
+									<el-input
+										:value="group.options[oIdx].price"
+										@input="setSpecPrice(gIdx, oIdx, $event)"
+										:disabled="gIdx !== 0"
+										class="spec-price-input"
+										:placeholder="gIdx === 0 ? '成交价' : '仅首分类可定价'"
+									></el-input>
+									<el-button size="mini" @click="changeSpecPrice(gIdx, oIdx, 1)" :disabled="gIdx !== 0">+</el-button>
+								</div>
+								<el-button size="mini" @click="moveSpecOption(gIdx, oIdx, -1)" :disabled="oIdx===0">上移</el-button>
+								<el-button size="mini" @click="moveSpecOption(gIdx, oIdx, 1)" :disabled="oIdx===group.options.length-1">下移</el-button>
+								<el-button size="mini" plain type="primary" @click="addSpecOption(gIdx, oIdx)">新增属性</el-button>
+								<el-button size="mini" type="danger" @click="removeSpecOption(gIdx, oIdx)">删除属性</el-button>
+							</div>
+						</div>
+					</div>
+					<div v-else-if="$check_field('get','product_specifications')">{{ renderSpecGroupText(form['product_specifications']) }}</div>
+				</el-form-item>
 			</el-col>
 						
 	
@@ -202,6 +231,7 @@
                     cart_img_5: "",
 						"cultural_and_creative_mall_id": 0, // ID
 													},
+				specification_groups: [],
 				disabledObj:{
 								"seller_customers_isDisabled": false,
 										"personnel_name_isDisabled": false,
@@ -383,8 +413,23 @@
 			 * @param {Object} func
 			 */
 			get_obj_after(json, func){
-															
-
+				this.syncSpecificationGroupsFromForm();
+				const sourceId = this.form[this.field];
+				if (sourceId) {
+					this.$get("~/api/goods/get_obj?", {
+						source_table: "cultural_and_creative_mall",
+						source_field: this.field,
+						source_id: sourceId
+					}, (res) => {
+						if (res && res.result && res.result.obj && res.result.obj.customize_field) {
+							const list = this.parseCustomizeFieldList(res.result.obj.customize_field);
+							const specItem = list.find(item => item.field_name === "商品规格" && item.type === "spec_schema");
+							if (specItem && specItem.field_value) {
+								this.specification_groups = this.parseSpecificationGroups(specItem.field_value);
+							}
+						}
+					});
+				}
 			},
 
 																											async submit(param, func){
@@ -408,9 +453,160 @@
 			 * @param {Object} 请求参数
 			 * @return {String} 验证成功返回null, 失败返回错误提示
 			 */
-						submit_check(param) {
-					
+			submit_check(param) {
+				const normalized = this.specification_groups
+					.map(group => ({
+						name: String(group.name || "").trim(),
+						options: (group.options || []).map(v => this.normalizeSpecOption(v)).filter(v => v.value)
+					}))
+					.filter(group => group.name && group.options.length > 0);
+				if (normalized.length) {
+					const firstGroup = normalized[0];
+					for (let j = 0; j < firstGroup.options.length; j++) {
+						const opt = firstGroup.options[j];
+						if (!Number.isFinite(Number(opt.price)) || Number(opt.price) <= 0) {
+							return "已设置规格时，第一分类下每个属性都必须填写大于0的成交价";
+						}
+					}
+				}
+				param.product_specifications = this.buildSpecSummary(64);
 																																	return null;
+			},
+			syncSpecificationGroupsFromForm(){
+				this.specification_groups = this.parseSpecificationGroups(this.form.product_specifications);
+			},
+			parseSpecificationGroups(raw){
+				if(!raw){
+					return [];
+				}
+				try{
+					const parsed = JSON.parse(raw);
+					if(Array.isArray(parsed)){
+						return parsed.map((group)=>({
+							name: String((group && group.name) || "").trim(),
+							options: Array.isArray(group && group.options)
+								? group.options.map(v => this.normalizeSpecOption(v)).filter(v => v.value)
+								: []
+						}));
+					}
+				}catch(e){
+					// old plain-text compatibility
+				}
+				const text = String(raw).trim();
+				if(!text){
+					return [];
+				}
+				// legacy plain-text data: initialize as blank placeholders so users can directly type without deleting.
+				return [{ name: "", options: [this.defaultSpecOption()] }];
+			},
+			defaultSpecOption(){
+				return { value: "", stock: 0, price: Number(this.form.cart_price || 0) };
+			},
+			normalizeSpecOption(raw){
+				if (typeof raw === "string") {
+					return { value: raw.trim(), stock: 0, price: Number(this.form.cart_price || 0) };
+				}
+				const value = String((raw && raw.value) || "").trim();
+				const stock = Number.isFinite(Number(raw && raw.stock)) ? Math.max(0, parseInt(raw.stock, 10)) : 0;
+				const price = Number.isFinite(Number(raw && raw.price)) ? Math.max(0, Number(raw.price)) : Number(this.form.cart_price || 0);
+				return { value, stock, price };
+			},
+			parseCustomizeFieldList(raw){
+				try{
+					const parsed = JSON.parse(raw);
+					return Array.isArray(parsed) ? parsed : [];
+				}catch(e){
+					return [];
+				}
+			},
+			serializeSpecificationGroups(){
+				const normalized = this.specification_groups
+					.map((group, groupIdx) => ({
+						name: String(group.name || "").trim(),
+						options: (group.options || [])
+							.map(v => this.normalizeSpecOption(v))
+							.map(v => groupIdx === 0 ? v : ({ ...v, price: 0 }))
+							.filter(v => v.value)
+					}))
+					.filter(group => group.name && group.options.length > 0);
+				return normalized.length ? JSON.stringify(normalized) : "";
+			},
+			buildSpecSummary(maxLen = 64){
+				const normalized = this.specification_groups
+					.map(group => ({
+						name: String(group.name || "").trim(),
+						options: (group.options || [])
+							.map(v => this.normalizeSpecOption(v))
+							.filter(v => v.value)
+					}))
+					.filter(group => group.name && group.options.length > 0);
+				if (!normalized.length) {
+					return "";
+				}
+				let summary = normalized.map(group => `${group.name}:${group.options.map(o => o.value).join("/")}`).join("；");
+				if (summary.length > maxLen) {
+					summary = summary.slice(0, maxLen);
+				}
+				return summary;
+			},
+			renderSpecGroupText(raw){
+				const groups = this.parseSpecificationGroups(raw);
+				if(!groups.length){
+					return "";
+				}
+				return groups.map(g => `${g.name}: ${g.options.join(" / ")}`).join("；");
+			},
+			addSpecGroup(){
+				this.specification_groups.push({ name: "", options: [this.defaultSpecOption()] });
+			},
+			removeSpecGroup(groupIdx){
+				this.specification_groups.splice(groupIdx, 1);
+			},
+			moveSpecGroup(groupIdx, step){
+				const target = groupIdx + step;
+				if(target < 0 || target >= this.specification_groups.length){
+					return;
+				}
+				const list = this.specification_groups;
+				const tmp = list[groupIdx];
+				this.$set(list, groupIdx, list[target]);
+				this.$set(list, target, tmp);
+			},
+			addSpecOption(groupIdx, optionIdx){
+				if(typeof optionIdx === "number"){
+					this.specification_groups[groupIdx].options.splice(optionIdx + 1, 0, this.defaultSpecOption());
+					return;
+				}
+				this.specification_groups[groupIdx].options.push(this.defaultSpecOption());
+			},
+			removeSpecOption(groupIdx, optionIdx){
+				this.specification_groups[groupIdx].options.splice(optionIdx, 1);
+			},
+			moveSpecOption(groupIdx, optionIdx, step){
+				const opts = this.specification_groups[groupIdx].options;
+				const target = optionIdx + step;
+				if(target < 0 || target >= opts.length){
+					return;
+				}
+				const tmp = opts[optionIdx];
+				this.$set(opts, optionIdx, opts[target]);
+				this.$set(opts, target, tmp);
+			},
+			setSpecPrice(groupIdx, optionIdx, val){
+				if (groupIdx !== 0) {
+					return;
+				}
+				const num = Number(val);
+				const next = Number.isFinite(num) ? Math.max(0, num) : 0;
+				this.specification_groups[groupIdx].options[optionIdx].price = Number(next.toFixed(2));
+			},
+			changeSpecPrice(groupIdx, optionIdx, delta){
+				if (groupIdx !== 0) {
+					return;
+				}
+				const current = Number(this.specification_groups[groupIdx].options[optionIdx].price || 0);
+				const next = Math.max(0, current + delta);
+				this.specification_groups[groupIdx].options[optionIdx].price = Number(next.toFixed(2));
 			},
 
 			is_view(){
@@ -444,16 +640,13 @@
 			},
 			submitCheckNew(){
 				let that=this;
-				for(var i=0;i<5;i++){
-					if(i==0 && !this.form[`cart_img`]){
-						this.$toast(`请上传封面图`,"error");
-						return false;
-					}else{
-						if(!this.form['cart_img_'+(i+1)]){
-							this.$toast('请上传主图'+(i+1),"error");
-							return false;
-						}
-					}
+				if(this.user.user_group !== "管理员" && Number(this.form.seller_customers) !== Number(this.user.user_id)){
+					this.$toast("仅管理员和该商品上传传承用户可编辑", "error");
+					return false;
+				}
+				if(!this.form.cart_img){
+					this.$toast("请上传封面图","error");
+					return false;
 				}
 				this.$refs["form"].validate((valid) => {
 					if (valid) {
@@ -540,10 +733,12 @@
                 }
             },
             submit_goods(source_id,add_flag){
+				const fullSpecSchema = this.serializeSpecificationGroups();
+				this.form.product_specifications = this.buildSpecSummary(64);
 				let customize_field = []
 							customize_field.push({"field_name":"卖家用户","field_value":this.form.seller_customers,"type":"uid"});
 									customize_field.push({"field_name":"人员姓名","field_value":this.form.personnel_name});
-									customize_field.push({"field_name":"商品规格","field_value":this.form.product_specifications});
+									customize_field.push({"field_name":"商品规格","field_value":fullSpecSchema, "type":"spec_schema"});
 			                this.goods_form = {
                     goods_id: 0,
                     title: this.form.cart_title,
@@ -606,9 +801,16 @@
 					this.get_list_user_seller_customers();
 					this.get_group_user_seller_customers();
 							            this.get_cart_goods_type();
+			this.syncSpecificationGroupsFromForm();
 		},
 		mounted(){
 			this.$refs["form"].resetFields();
+			this.syncSpecificationGroupsFromForm();
+		},
+		watch: {
+			'form.product_specifications': function() {
+				this.syncSpecificationGroupsFromForm();
+			}
 		}
 	}
 </script>
@@ -666,6 +868,41 @@
 		text-align: center;
 		border-radius: 100%;
 		cursor: pointer;
+	}
+
+	.spec-editor-header {
+		margin-bottom: 8px;
+	}
+	.spec-group-card {
+		border: none;
+		border-radius: 0;
+		padding: 10px;
+		margin-bottom: 10px;
+		width: 760px;
+		max-width: 100%;
+	}
+	.spec-group-row,
+	.spec-option-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 8px;
+	}
+	.spec-group-name,
+	.spec-option-input {
+		width: 300px !important;
+	}
+	.spec-group-name .el-input__inner,
+	.spec-option-input .el-input__inner {
+		width: 300px !important;
+	}
+	.spec-price-editor {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.spec-price-input {
+		width: 150px;
 	}
 
 

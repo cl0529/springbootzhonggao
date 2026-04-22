@@ -155,11 +155,9 @@
              *  获取热门商品
              * */
             get_hot_goods() {
-            	let url = "~/api/goods/get_list?";
+            	let url = "~/api/goods/get_hot_list?";
             	let param = {
-            		page: 1,
-        			size: 5,
-        			orderby: "hits"
+        			size: 5
             	};
                 	                	                	                	                	                	                	                        this.$get(
                     url,
