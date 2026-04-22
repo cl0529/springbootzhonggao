@@ -121,7 +121,6 @@
     let mySwiper;
     import score_star from "@/components/diy/score_star.vue";
     import mixin from "@/mixins/component.js";
-    import PicZoom from 'vue-piczoom'
     export default {
         mixins: [mixin],
         props: {
@@ -165,7 +164,7 @@
             },
         },
         components: {
-            score_star, PicZoom
+            score_star
         },
         data() {
             return {

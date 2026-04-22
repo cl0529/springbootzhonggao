@@ -25,7 +25,7 @@
                 <b-button v-if="this.$store.state.user.user_id" @click="add_collect()" :variant="check_collected ? 'info' : 'outline-info'" class="interact-btn" :class="{ 'is-active': check_collected }">
                     <b-icon v-if="check_collected" icon="heart-fill"/>
                     <b-icon v-else icon="heart"/>
-                    <span>收藏</span>
+                    <span>{{ check_collected ? '已收藏' : '收藏' }}</span>
                 </b-button>
                 <b-button v-else @click="$router.push('/account/login')" variant="outline-info" class="interact-btn">
                     <b-icon v-if="check_collected" icon="heart-fill"/>
@@ -33,9 +33,13 @@
                     <span>收藏</span>
                 </b-button>
 
-                <!-- 点赞按钮 -->
+                <!-- 点赞按钮（未登录时跳转登录，与收藏一致） -->
                 <b-button v-if="this.$store.state.user.user_id" class="ml interact-btn" :variant="check_praised ? 'info' : 'outline-info'" :class="{ 'is-active': check_praised }" @click="add_praise()">
                     <b-icon :icon="check_praised ? 'hand-thumbs-up-fill' : 'hand-thumbs-up'"/>
+                    <span>{{ check_praised ? '已点赞' : '点赞' }}</span>
+                </b-button>
+                <b-button v-else class="ml interact-btn" variant="outline-info" @click="$router.push('/account/login')">
+                    <b-icon icon="hand-thumbs-up"/>
                     <span>点赞</span>
                 </b-button>
             </div>
@@ -320,14 +324,16 @@
         font-size: 1.05em;
     }
 
+    /* 激活态由 diy.css 统一为橙红底白字，此处仅作兜底 */
     .btns_interact .interact-btn.is-active{
-        background-color: #134b59 !important;
-        border-color: #134b59 !important;
+        background-color: #e64a19 !important;
+        border-color: #e64a19 !important;
         color: #fff !important;
     }
 
     .btns_interact .interact-btn.is-active svg{
         color: #fff !important;
+        fill: #fff !important;
     }
 
     @media (max-width: 576px) {

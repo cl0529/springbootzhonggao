@@ -6412,25 +6412,46 @@ select option {
 }
 
 .page_article .div_article .aside .btns_interact .btn {
-	border-color: #ffb524;
-	color: #ffb524;
-	border-color: #ffb524;
-	color: #ffb524;
+	border: 2px solid #e64a19;
+	color: #e64a19;
+	background-color: #fff;
 	width: 172px;
-	height: 50px;
-	line-height: 50px;
+	min-height: 50px;
+	height: auto;
+	line-height: 1.2;
 	font-size: 18px;
-	padding: 0;
+	padding: 0 12px;
 	margin-right: 5px;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
 }
 
 .page_article .div_article .aside .btns_interact .btn svg {
 	margin-right: 5px;
+	flex-shrink: 0;
+	color: currentColor;
+	fill: currentColor;
 }
 
-.page_article .div_article .aside .btns_interact .btn:hover {
-	background: #9b0303;
-	color: #fff;
+/* 已点赞 / 已收藏：橙红底、白字 */
+.page_article .div_article .aside .btns_interact .btn.is-active,
+.page_article .div_article .aside .btns_interact .btn.interact-btn.is-active {
+	background-color: #e64a19 !important;
+	border-color: #e64a19 !important;
+	color: #fff !important;
+}
+
+.page_article .div_article .aside .btns_interact .btn.is-active svg,
+.page_article .div_article .aside .btns_interact .btn.interact-btn.is-active svg {
+	color: #fff !important;
+	fill: #fff !important;
+}
+
+.page_article .div_article .aside .btns_interact .btn:hover:not(.is-active) {
+	background: #fff5f0;
+	color: #e64a19;
+	border-color: #e64a19;
 }
 
 .page_article .div_article .description {
@@ -10535,8 +10556,27 @@ select option {
 	max-width: 100% !important;
 }
 
+/* 首页区块顺序：轮播 → 新闻资讯 → 非遗项目 → 文创商城（用 flex order 覆盖旧构建 DOM 顺序） */
 #root_demo {
 	background: transparent !important;
+	display: flex;
+	flex-direction: column;
+}
+
+#root_demo > .warp.banner {
+	order: 1;
+}
+
+#root_demo > .warp.article_s {
+	order: 2;
+}
+
+#root_demo > .ins.warp.model1 {
+	order: 3;
+}
+
+#root_demo > .warp.product {
+	order: 4;
 }
 
 #app .page_root .banner>.container {

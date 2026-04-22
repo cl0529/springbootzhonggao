@@ -21,66 +21,6 @@
 		</div>
 
 
-		<div class="warp product" v-if="$check_action('/goods/list', 'get')">
-		    <div class="container">
-		        <div class="row">
-		            <div class="col-12">
-		                <div class="article_recommend">
-		                    <div class="title">
-									                        <span> 文创商城 </span>
-									                    </div>
-							<div class="text_t"><span></span></div>
-		                    <div class="more_box">
-		                        <router-link to="/goods/list" class="pro_more more">
-		                            <span class="mor">更多</span>
-		                        </router-link>
-		                    </div>
-
-		                </div>
-		                <!-- 商品推荐列表组件 -->
-						<div class="list_goods_box">
-						 <div class="Left_box">
-								<span class="i"></span>
-								<span class="i"></span>
-								<span class="i"></span>
-							</div>
-						   <list_goods  :list="list_goods"/>
-						<goods_slisd  :list="list_goods"/>
-
-		                <!-- 商品推荐表格组件 -->
-		                <div class="overflow-auto table_goods" >
-		                    <table id="list_goods" role="table" aria-busy="false" :aria-colcount="fields_goods.length"
-		                           class="table b-table table-striped table-hover">
-		                        <thead>
-		                        <tr>
-		                            <th v-for="(o,i) in fields_goods" :key="i">
-		                                {{o.label}}
-		                            </th>
-		                        </tr>
-		                        </thead>
-		                        <tbody>
-		                        <tr v-for="(o, i) in list_table_goods" :key="i">
-		                            <td v-for="(oj,n) in fields_goods" @click="to_details('goods',o)">
-		                                <img v-if="oj.type && oj.type == '图片' " :src="$fullUrl(o[oj.key])" alt=""
-		                                     v-default-img="'../../public/img/default.png'">
-		                               <span v-else-if="oj.key === 'create_time'">{{ o[oj.key] | formatDate}}</span>
-		                                <span v-else>{{ o[oj.key] }}</span>
-		                            </td>
-		                        </tr>
-		                        </tbody>
-		                    </table>
-		                </div>
-						 <div class="right_box">
-								<span class="i"></span>
-								<span class="i"></span>
-								<span class="i"></span>
-                        </div>
-						</div>
-
-		            </div>
-		        </div>
-		    </div>
-		</div>
 		<div class="warp article_s">
 		    <!-- 容器 -->
 		    <div class="container">
@@ -180,7 +120,68 @@
 		    </div>
 		</div>
 		<!-- 推荐非遗项目模块(结束) -->
-				
+
+		<div class="warp product" v-if="$check_action('/goods/list', 'get')">
+		    <div class="container">
+		        <div class="row">
+		            <div class="col-12">
+		                <div class="article_recommend">
+		                    <div class="title">
+									                        <span> 文创商城 </span>
+									                    </div>
+							<div class="text_t"><span></span></div>
+		                    <div class="more_box">
+		                        <router-link to="/goods/list" class="pro_more more">
+		                            <span class="mor">更多</span>
+		                        </router-link>
+		                    </div>
+
+		                </div>
+		                <!-- 商品推荐列表组件 -->
+						<div class="list_goods_box">
+						 <div class="Left_box">
+								<span class="i"></span>
+								<span class="i"></span>
+								<span class="i"></span>
+							</div>
+						   <list_goods  :list="list_goods"/>
+						<goods_slisd  :list="list_goods"/>
+
+		                <!-- 商品推荐表格组件 -->
+		                <div class="overflow-auto table_goods" >
+		                    <table id="list_goods" role="table" aria-busy="false" :aria-colcount="fields_goods.length"
+		                           class="table b-table table-striped table-hover">
+		                        <thead>
+		                        <tr>
+		                            <th v-for="(o,i) in fields_goods" :key="i">
+		                                {{o.label}}
+		                            </th>
+		                        </tr>
+		                        </thead>
+		                        <tbody>
+		                        <tr v-for="(o, i) in list_table_goods" :key="i">
+		                            <td v-for="(oj,n) in fields_goods" @click="to_details('goods',o)">
+		                                <img v-if="oj.type && oj.type == '图片' " :src="$fullUrl(o[oj.key])" alt=""
+		                                     v-default-img="'../../public/img/default.png'">
+		                               <span v-else-if="oj.key === 'create_time'">{{ o[oj.key] | formatDate}}</span>
+		                                <span v-else>{{ o[oj.key] }}</span>
+		                            </td>
+		                        </tr>
+		                        </tbody>
+		                    </table>
+		                </div>
+						 <div class="right_box">
+								<span class="i"></span>
+								<span class="i"></span>
+								<span class="i"></span>
+                        </div>
+						</div>
+
+		            </div>
+		        </div>
+		    </div>
+		</div>
+
 	</div>
 </template>
 
@@ -475,9 +476,16 @@
 </script>
 
 <style scoped>
+/* 与 diy.css 中 #root_demo 一致，保证首页模块顺序：新闻 → 非遗 → 商城 */
 .page_root{
 	position: relative;
+	display: flex;
+	flex-direction: column;
 }
+.page_root > .warp.banner { order: 1; }
+.page_root > .warp.article_s { order: 2; }
+.page_root > .ins.warp.model1 { order: 3; }
+.page_root > .warp.product { order: 4; }
 .support_entry{
 	position: fixed;
 	top: 400px;
