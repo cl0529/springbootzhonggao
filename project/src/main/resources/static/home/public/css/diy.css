@@ -3990,7 +3990,7 @@ textarea:focus {
 
 /* **************************************************导航栏开始*********************************************** */
 .page_header .header_warp {
-	background: #F5F4ED !important;
+	background: rgb(0, 47, 167) !important;
 	position: relative;
 	height: auto !important;
 	box-shadow: none !important;
@@ -4004,7 +4004,7 @@ textarea:focus {
 	display: flex;
 	align-items: center;
 	height: 80px;
-	background: #153e49 !important;
+	background: rgb(0, 47, 167) !important;
 	position: absolute;
 	width: 100%;
 	

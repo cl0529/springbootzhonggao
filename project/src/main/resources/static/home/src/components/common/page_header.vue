@@ -213,6 +213,12 @@
     },
 
     methods: {
+      shouldHideTopNav(item) {
+        if (!item) return false;
+        const title = String(item.page_title || item.mod_name || "").trim();
+        const path = String(item.path || "").trim();
+        return title === "传承人员" || path.indexOf("/inheritance_personnel/") !== -1;
+      },
       up_gd(){
         if (this.$store.state.user){
           let avatar = this.$store.state.user.avatar
@@ -254,7 +260,7 @@
           var arr = [];
           for (var i = 0; i < auth.length; i++) {
             var o = auth[i];
-            if (o["position"] == "top") {
+            if (o["position"] == "top" && !this.shouldHideTopNav(o)) {
               arr.push(o);
             }
           }
@@ -268,7 +274,7 @@
             "page": ""
           });
           if (res.result && res.result.list) {
-            this.nav_top = res.result.list;
+            this.nav_top = res.result.list.filter((o) => !this.shouldHideTopNav(o));
           }
         }
       },
@@ -399,7 +405,8 @@
 <style scoped="scoped">
 
   .header_warp {
-    background-color: var(--color_primary);
+    /* 克莱因蓝 */
+    background-color: #002fa7;
     height: 4rem;
     color: white;
     font-weight: 600;
