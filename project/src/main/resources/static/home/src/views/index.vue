@@ -62,7 +62,7 @@
 									<tr v-for="(o, i) in list_table_article" :key="i">
 										<td v-for="(oj,n) in fields_article" @click="to_details('article',o)">
 											<img v-if="oj.type && oj.type == '图片' " :src="$fullUrl(o[oj.key])" alt=""
-												 v-default-img="'../../public/img/default.png'">
+												 v-default-img="'/img/default.png'">
 											<span v-else-if="oj.key === 'create_time'">{{ o[oj.key] | formatDate }}</span>
 											<span v-else>{{ o[oj.key] }}</span>
 										</td>
@@ -162,7 +162,7 @@
 		                        <tr v-for="(o, i) in list_table_goods" :key="i">
 		                            <td v-for="(oj,n) in fields_goods" @click="to_details('goods',o)">
 		                                <img v-if="oj.type && oj.type == '图片' " :src="$fullUrl(o[oj.key])" alt=""
-		                                     v-default-img="'../../public/img/default.png'">
+		                                     v-default-img="'/img/default.png'">
 		                               <span v-else-if="oj.key === 'create_time'">{{ o[oj.key] | formatDate}}</span>
 		                                <span v-else>{{ o[oj.key] }}</span>
 		                            </td>

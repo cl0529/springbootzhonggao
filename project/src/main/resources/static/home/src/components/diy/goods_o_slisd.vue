@@ -7,7 +7,7 @@
                     <a class="router-link-exact-active router-link-active" @click="goodsClickFn('/goods/details?' + vm.goods_id + '=' + o[vm.goods_id], o)">
                         <div class="media">
                             <div class="icon h-100">
-                                <img :src="$fullUrl(o[vm.img])" style="width:100%;height:100%" v-default-img="'../../../public/img/default.png'" />
+                                <img :src="$fullUrl(o[vm.img])" style="width:100%;height:100%" v-default-img="'/img/default.png'" />
                             </div>
                             <a class="router-link-exact-active router-link-active">
                                 <div class="title">{{ o[vm.title] }}</div>

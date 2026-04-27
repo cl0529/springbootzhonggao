@@ -6,8 +6,8 @@
 			<div class="article">
 				<div class="media">
 					<div class="icon">
-						<img :src="o[vm.img] ? $fullUrl(o[vm.img]) : '../../../public/img/default.png'"
-							v-default-img="'../../../public/img/default.png'" />
+					<img :src="o[vm.img] ? $fullUrl(o[vm.img]) : '/img/default.png'"
+							v-default-img="'/img/default.png'" />
 					</div>
 				</div>
 				<div class="doc">

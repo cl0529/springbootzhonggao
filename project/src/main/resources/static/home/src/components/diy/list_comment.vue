@@ -6,7 +6,7 @@
           <img
             style="width: 4rem; height: 4rem"
             :src="$fullUrl(o[vm.avatar])"
-            v-default-img="'../../../public/img/default.png'"
+            v-default-img="'/img/default.png'"
           />
         </div>
         <div class="right_block">

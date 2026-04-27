@@ -7,7 +7,7 @@
                     
                     <router-link :to="'/goods/details?' + vm.goods_id + '=' + o[vm.goods_id]" class="lis_cont">
                           
-                            <img :src="$fullUrl(o[vm.img])" style="width:100%;height:100%" v-default-img="'../../../public/img/default.png'" />
+                            <img :src="$fullUrl(o[vm.img])" style="width:100%;height:100%" v-default-img="'/img/default.png'" />
 							<div class="title">{{ o[vm.title] }}</div>
                     <div class="doc">
                         <span class="price">￥{{ o[vm.price] }}</span>

@@ -46,6 +46,10 @@ export default {
 		 */
 		Vue.directive('default-img', async function (el, binding) {
 			let imgURL = binding.value; //获取图片地址
+			if (imgURL && typeof imgURL === "string") {
+				// Vue public 目录资源在运行时映射到 /img/*，避免 ../public/img/* 404
+				imgURL = imgURL.replace(/^(?:\.\.\/)+public\/img\//, "/img/");
+			}
 			if (imgURL) {
 				let exist = await imageIsExist(imgURL);
 				if (exist) {

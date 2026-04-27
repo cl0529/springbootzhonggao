@@ -4,7 +4,7 @@
 			<router-link to="">
 				<div class="media">
 					<div class="icon h-100">
-						<img :src="$fullUrl(o[vm.img])" style="width:100%;height:100%" v-default-img="'../../../public/img/default.png'" />
+						<img :src="$fullUrl(o[vm.img])" style="width:100%;height:100%" v-default-img="'/img/default.png'" />
 					</div>
 				</div>
 			</router-link>

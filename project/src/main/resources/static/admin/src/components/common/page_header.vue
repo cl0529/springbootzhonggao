@@ -99,7 +99,8 @@
    		 	this.timer = setInterval(this.updateDateTime, 1000);
    		 	const { protocol, hostname, port, origin, pathname } = window.location;
 			if (String(port) === "8083") {
-				this.homeUrl = `${protocol}//${hostname}:8081/#/`;
+				// 本地开发时前台服务固定在 8082，避免头像下“网站首页”跳转到旧端口 8081 导致 404
+				this.homeUrl = `${protocol}//${hostname}:8082/#/`;
 			} else if (pathname.indexOf("/admin/dist") !== -1) {
 				this.homeUrl = `${origin}${pathname.replace("/admin/dist","/home/dist")}#/`;
 			} else {

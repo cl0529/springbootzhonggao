@@ -13,8 +13,8 @@
         >
           <div class="media">
             <img
-                :src="o[vm.img] ? $fullUrl(o[vm.img]) : '../../../public/img/default.png'"
-                v-default-img="'../../../public/img/default.png'"
+                :src="o[vm.img] ? $fullUrl(o[vm.img]) : '/img/default.png'"
+                v-default-img="'/img/default.png'"
                 alt="图片丢失"
             />
           </div>

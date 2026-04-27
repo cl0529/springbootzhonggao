@@ -15,7 +15,7 @@
         <div class="left_block">
           <img
             style="width: 3rem; height: 3rem"
-            :src="o[vm.img] ? $fullUrl(o[vm.img]) : '../../../public/img/default.png'"
+            :src="o[vm.img] ? $fullUrl(o[vm.img]) : '/img/default.png'"
           />
         </div>
         <div class="right_block">

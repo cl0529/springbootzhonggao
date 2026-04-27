@@ -21,7 +21,7 @@
 										<div class="figure_avatar">
 											<span>头像：</span>
 											<b-img class="user_avator"
-												:src="obj.avatar ? $fullUrl(obj.avatar) : '../../../public/img/default.png'" alt=""
+												:src="obj.avatar ? $fullUrl(obj.avatar) : '/img/default.png'" alt=""
 												style="width: 3rem; height: 3rem" />
 										</div>
 										<div class="nickname">

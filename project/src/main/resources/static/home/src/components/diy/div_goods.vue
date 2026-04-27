@@ -30,7 +30,7 @@
                                 <!-- swiper_img2测试时看效果 正式环境数组换成list_img -->
                                 <div class="swiper-slide" v-for="(o, i) in list_img" :key="i">
                                     <img :src="$fullUrl(o)"  class="main_img"
-                                    v-default-img="'../../../public/img/default.png'" />
+                                    v-default-img="'/img/default.png'" />
                                 </div>
                             </div>
                         </div>

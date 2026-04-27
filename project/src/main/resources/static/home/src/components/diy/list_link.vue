@@ -8,7 +8,7 @@
                         <img
                                 :src="$fullUrl(o[vm.img])"
                                 class="img"
-                                v-default-img="'../../../public/img/default.png'"
+                                v-default-img="'/img/default.png'"
                         />
                     </div>
                     <div class="link_name">
